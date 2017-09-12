@@ -1,0 +1,18 @@
+{
+  "name": "split_merger",
+  "version": "0.1",
+  "description": "The_Split_and_Merge_API_allows_you_to_split_and_merge_files__For_now_you_always_have_to_define_the_filetype_for_the_split_or_merge_result__Supported_types_are_Tiff_PDF_or_MS_word_files__In_the_future_new_types_as_well_as_type_inferring_will_be_implemented__Please_note_that_this_API_will_change_in_the_way_the_merge_or_split_is_initiated_from_v0_1_to_v0_2_which_is_scheduled_later_in_2017_",
+  "license": "Apache-2.0",
+  "main": "src/SphereonSDKSplitMerge/index.js",
+  "scripts": {
+    "test": "./node_modules/mocha/bin/mocha --recursive"
+  },
+  "dependencies": {
+    "superagent": "1.7.1"
+  },
+  "devDependencies": {
+    "mocha": "~2.3.4",
+    "sinon": "1.17.3",
+    "expect.js": "~0.3.1"
+  }
+}
