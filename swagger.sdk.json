@@ -1,0 +1,556 @@
+{
+  "basePath": "/split-merge/0.1",
+  "paths": {
+    "/jobs/{jobid}": {
+      "post": {
+        "summary": "Upload a file for a job",
+        "security": [{"oauth2schema": ["global"]}],
+        "produces": ["application/json;charset=UTF-8"],
+        "description": "Upload a file for a split or merge job. Processing will not be started yet.",
+        "operationId": "uploadFile",
+        "responses": {
+          "200": {
+            "schema": {"$ref": "#/definitions/Job"},
+            "description": "File uploaded. The job will be returned in the body."
+          },
+          "400": {
+            "schema": {"$ref": "#/definitions/ErrorResponse"},
+            "description": "File for job could not be stored/processed"
+          },
+          "404": {
+            "schema": {"$ref": "#/definitions/ErrorResponse"},
+            "description": "Invalid job id."
+          }
+        },
+        "parameters": [
+          {
+            "in": "path",
+            "name": "jobid",
+            "description": "jobid",
+            "type": "string",
+            "required": true
+          },
+          {
+            "in": "formData",
+            "name": "stream",
+            "description": "The binary image to upload for a job",
+            "type": "file",
+            "required": true
+          }
+        ],
+        "tags": ["All"],
+        "consumes": ["multipart/form-data"]
+      },
+      "get": {
+        "summary": "Get a job",
+        "security": [{"oauth2schema": ["global"]}],
+        "produces": ["application/json;charset=UTF-8"],
+        "description": "Get a job",
+        "operationId": "getJob",
+        "responses": {
+          "200": {
+            "schema": {"$ref": "#/definitions/Job"},
+            "description": "Job"
+          },
+          "404": {
+            "schema": {"$ref": "#/definitions/ErrorResponse"},
+            "description": "Job not found"
+          }
+        },
+        "parameters": [{
+          "in": "path",
+          "name": "jobid",
+          "description": "jobid",
+          "type": "string",
+          "required": true
+        }],
+        "tags": ["All"],
+        "consumes": ["application/json"]
+      },
+      "delete": {
+        "summary": "Delete a job manually",
+        "security": [{"oauth2schema": ["global"]}],
+        "produces": ["application/json;charset=UTF-8"],
+        "description": "Delete a job manually with all its stored objects",
+        "operationId": "deleteJob",
+        "responses": {
+          "200": {
+            "schema": {"$ref": "#/definitions/Job"},
+            "description": "Job deleted"
+          },
+          "400": {
+            "schema": {"$ref": "#/definitions/ErrorResponse"},
+            "description": "Job failed to delete"
+          },
+          "404": {
+            "schema": {"$ref": "#/definitions/ErrorResponse"},
+            "description": "Job was already deleted or unknown job id"
+          }
+        },
+        "parameters": [{
+          "in": "path",
+          "name": "jobid",
+          "description": "jobid",
+          "type": "string",
+          "required": true
+        }],
+        "tags": ["All"],
+        "consumes": ["application/json"]
+      }
+    },
+    "/jobs/{jobid}/merge": {"put": {
+      "summary": "Start merging of a job",
+      "security": [{"oauth2schema": ["global"]}],
+      "produces": ["application/json;charset=UTF-8"],
+      "description": "Start merging of a job",
+      "operationId": "submitMergeJob",
+      "responses": {
+        "200": {
+          "schema": {"$ref": "#/definitions/Job"},
+          "description": "Merging started. The job will be returned in the body."
+        },
+        "400": {
+          "schema": {"$ref": "#/definitions/ErrorResponse"},
+          "description": "Merging request could not be processed"
+        },
+        "404": {
+          "schema": {"$ref": "#/definitions/ErrorResponse"},
+          "description": "Invalid job id. No response body is supplied"
+        }
+      },
+      "parameters": [
+        {
+          "in": "path",
+          "name": "jobid",
+          "description": "jobid",
+          "type": "string",
+          "required": true
+        },
+        {
+          "schema": {"$ref": "#/definitions/MergeSettings"},
+          "in": "body",
+          "name": "settings",
+          "description": "settings",
+          "required": true
+        }
+      ],
+      "tags": ["All"],
+      "consumes": ["application/json"]
+    }},
+    "/jobs/{jobid}/stream": {"get": {
+      "summary": "Get the current result stream",
+      "security": [{"oauth2schema": ["global"]}],
+      "produces": [
+        "application/octet-stream",
+        "application/json;charset=UTF-8"
+      ],
+      "description": "Get the result as binary stream/file.\r\nOur API generation does not allow changing the media type based on the Accepted header unfortunately.<br/>This means we use a seperate path postfix with the value '/stream'.\r\nThis API only returns the result when the response status code is zero! In other cases nothing is returned or the Job JSON when it is still being executed",
+      "operationId": "getStream",
+      "responses": {
+        "200": {
+          "schema": {
+            "format": "byte",
+            "type": "string"
+          },
+          "description": "Result successfully created and returned"
+        },
+        "400": {
+          "schema": {"$ref": "#/definitions/ErrorResponse"},
+          "description": "Result could not be created."
+        },
+        "404": {
+          "schema": {"$ref": "#/definitions/ErrorResponse"},
+          "description": "Invalid job id. No response body is supplied"
+        }
+      },
+      "parameters": [{
+        "in": "path",
+        "name": "jobid",
+        "description": "jobid",
+        "type": "string",
+        "required": true
+      }],
+      "tags": ["All"],
+      "consumes": ["application/json"]
+    }},
+    "/jobs": {"post": {
+      "summary": "Create a new job",
+      "security": [{"oauth2schema": ["global"]}],
+      "produces": ["application/json;charset=UTF-8"],
+      "description": "Create a new job for a splitting or merging operation",
+      "operationId": "createJob",
+      "responses": {
+        "200": {
+          "schema": {"$ref": "#/definitions/Job"},
+          "description": "Job"
+        },
+        "201": {
+          "schema": {"$ref": "#/definitions/Job"},
+          "description": "Created"
+        },
+        "400": {
+          "schema": {"$ref": "#/definitions/ErrorResponse"},
+          "description": "Invalid job settings"
+        }
+      },
+      "parameters": [{
+        "schema": {"$ref": "#/definitions/JobSettings"},
+        "in": "body",
+        "name": "jobSettings",
+        "description": "jobSettings",
+        "required": true
+      }],
+      "tags": ["All"],
+      "consumes": ["application/json;charset=UTF-8"]
+    }},
+    "/jobs/{jobid}/split": {"put": {
+      "summary": "Start splitting of a job",
+      "security": [{"oauth2schema": ["global"]}],
+      "produces": ["application/json;charset=UTF-8"],
+      "description": "Start splitting of a job",
+      "operationId": "submitSplitJob",
+      "responses": {
+        "200": {
+          "schema": {"$ref": "#/definitions/Job"},
+          "description": "Splitting started. The job will be returned in the body."
+        },
+        "400": {
+          "schema": {"$ref": "#/definitions/ErrorResponse"},
+          "description": "Splitting request could not be processed"
+        },
+        "404": {
+          "schema": {"$ref": "#/definitions/ErrorResponse"},
+          "description": "Invalid job id. No response body is supplied"
+        }
+      },
+      "parameters": [
+        {
+          "in": "path",
+          "name": "jobid",
+          "description": "jobid",
+          "type": "string",
+          "required": true
+        },
+        {
+          "schema": {"$ref": "#/definitions/SplitSettings"},
+          "in": "body",
+          "name": "settings",
+          "description": "settings",
+          "required": true
+        }
+      ],
+      "tags": ["All"],
+      "consumes": ["application/json"]
+    }}
+  },
+  "host": "gw.api.cloud.sphereon.com",
+  "schemes": ["https"],
+  "securityDefinitions": {"oauth2schema": {
+    "tokenUrl": "https://gw.api.cloud.sphereon.com/token",
+    "scopes": {"global": "accessEverything"},
+    "type": "oauth2",
+    "flow": "application"
+  }},
+  "definitions": {
+    "SplitSettings": {
+      "type": "object",
+      "required": [
+        "deliveryFormat",
+        "fileFormat"
+      ],
+      "properties": {
+        "lifecycle": {"$ref": "#/definitions/Lifecycle"},
+        "deliveryFormat": {
+          "description": "format which will be returned when the result is requested",
+          "type": "string",
+          "enum": [
+            "FILE",
+            "ZIP",
+            "_7ZIP"
+          ]
+        },
+        "splitPages": {
+          "type": "array",
+          "items": {
+            "format": "int32",
+            "type": "integer"
+          }
+        },
+        "fileFormat": {
+          "description": "the format of the output file",
+          "type": "string",
+          "enum": [
+            "TIFF",
+            "PDF",
+            "DOCX",
+            "DOC"
+          ]
+        }
+      }
+    },
+    "JobSettings": {
+      "description": "Job settings",
+      "type": "object",
+      "required": [
+        "engine",
+        "storageProvider"
+      ],
+      "properties": {
+        "backendSettings": {
+          "description": "Settings of the storage backend",
+          "$ref": "#/definitions/BackendSettings"
+        },
+        "storageProvider": {
+          "description": "The provider of the storage backend",
+          "type": "string",
+          "enum": ["API_SUPPLIER"]
+        },
+        "engine": {
+          "description": "The quality of the action engine that will be used to process the job",
+          "type": "string",
+          "enum": [
+            "BASIC",
+            "ADVANCED",
+            "PREMIUM"
+          ]
+        }
+      }
+    },
+    "Lifecycle": {
+      "description": "Lifecycle settings. When no lifecycle settings are supplied, the job and files will be deleted directly after retrieval of the file",
+      "type": "object",
+      "properties": {
+        "actionTime": {
+          "format": "date-time",
+          "description": "The time at which the job and files will be deleted, regardless of whether it has been retrieved or not. Maximal time is 1 day from job creation",
+          "type": "string"
+        },
+        "action": {
+          "description": "The action that will be performed when result is retrieved. Currently only delete is supported",
+          "type": "string",
+          "enum": ["DELETE"]
+        },
+        "type": {
+          "description": "Determine when to delete the job and associated files.\r\nRETRIEVAL means delete directly after retrieving the PDF file. When the file has not been retrieved before the merger time, it will be deleted regardless.\r\nTime means, delete on specific time, regardles of whether it has been processed",
+          "type": "string",
+          "enum": [
+            "RETRIEVAL",
+            "TIME"
+          ]
+        }
+      }
+    },
+    "Error": {
+      "description": "An error",
+      "type": "object",
+      "required": [
+        "code",
+        "level",
+        "message"
+      ],
+      "properties": {
+        "code": {"type": "string"},
+        "level": {
+          "type": "string",
+          "enum": [
+            "INFO",
+            "WARNING",
+            "FATAL"
+          ]
+        },
+        "cause": {"$ref": "#/definitions/Error"},
+        "message": {"type": "string"}
+      }
+    },
+    "FileEntry": {
+      "type": "object",
+      "required": [
+        "fileFormat",
+        "fileId",
+        "filename"
+      ],
+      "properties": {
+        "filename": {
+          "description": "name of file that is uploaded for a job",
+          "type": "string"
+        },
+        "fileFormat": {
+          "description": "file format of file",
+          "type": "string",
+          "enum": [
+            "TIFF",
+            "PDF",
+            "DOCX",
+            "DOC"
+          ]
+        },
+        "fileId": {
+          "description": "an identifier for the file that is used for file storage",
+          "type": "string"
+        }
+      }
+    },
+    "MergeSettings": {
+      "type": "object",
+      "required": [
+        "deliveryFormat",
+        "fileFormat"
+      ],
+      "properties": {
+        "lifecycle": {"$ref": "#/definitions/Lifecycle"},
+        "deliveryFormat": {
+          "description": "format which will be returned when the result is requested",
+          "type": "string",
+          "enum": [
+            "FILE",
+            "ZIP",
+            "_7ZIP"
+          ]
+        },
+        "fileFormat": {
+          "description": "the format of the output file",
+          "type": "string",
+          "enum": [
+            "TIFF",
+            "PDF",
+            "DOCX",
+            "DOC"
+          ]
+        }
+      }
+    },
+    "Job": {
+      "type": "object",
+      "required": [
+        "actionSettings",
+        "jobSettings",
+        "state"
+      ],
+      "properties": {
+        "completionTime": {
+          "format": "date-time",
+          "description": "The completion date/time of this job in ISO 8601 format",
+          "readOnly": true,
+          "type": "string"
+        },
+        "jobId": {"type": "string"},
+        "creationTime": {
+          "format": "date-time",
+          "description": "The creation date/time of this job in ISO 8601 format",
+          "readOnly": true,
+          "type": "string"
+        },
+        "inputs": {
+          "description": "The input files",
+          "type": "array",
+          "items": {"$ref": "#/definitions/FileEntry"}
+        },
+        "actionSettings": {"$ref": "#/definitions/ActionSettings"},
+        "jobSettings": {"$ref": "#/definitions/JobSettings"},
+        "updateTime": {
+          "format": "date-time",
+          "description": "The last update date/time of this job in ISO 8601 format",
+          "readOnly": true,
+          "type": "string"
+        },
+        "state": {
+          "description": "The status of the job",
+          "readOnly": true,
+          "type": "string",
+          "enum": [
+            "INPUTS_UPLOADED",
+            "PROCESSING",
+            "DONE",
+            "ERROR",
+            "DELETED"
+          ]
+        },
+        "queueTime": {
+          "format": "date-time",
+          "description": "The queue date/time of this job in ISO 8601 format",
+          "readOnly": true,
+          "type": "string"
+        }
+      }
+    },
+    "ActionSettings": {
+      "type": "object",
+      "properties": {
+        "lifecycle": {"$ref": "#/definitions/Lifecycle"},
+        "deliveryFormat": {
+          "type": "string",
+          "enum": [
+            "FILE",
+            "ZIP",
+            "_7ZIP"
+          ]
+        },
+        "fileFormat": {
+          "type": "string",
+          "enum": [
+            "TIFF",
+            "PDF",
+            "DOCX",
+            "DOC"
+          ]
+        }
+      }
+    },
+    "BackendSettings": {
+      "type": "object",
+      "required": [
+        "backend",
+        "backendType",
+        "container"
+      ],
+      "properties": {
+        "container": {
+          "description": "name of the container where files will be stored",
+          "type": "string"
+        },
+        "backendType": {
+          "description": "type of the backend where files will be stored",
+          "type": "string",
+          "enum": [
+            "FILESYSTEM",
+            "AMAZON_S3",
+            "MS_AZURE_BLOB_STORAGE",
+            "GOOGLE_CLOUD_STORAGE"
+          ]
+        },
+        "backend": {
+          "description": "name of the backend where files will be stored",
+          "type": "string"
+        }
+      }
+    },
+    "ErrorResponse": {
+      "description": "The error response",
+      "type": "object",
+      "properties": {"errors": {
+        "type": "array",
+        "items": {"$ref": "#/definitions/Error"}
+      }}
+    }
+  },
+  "swagger": "2.0",
+  "info": {
+    "license": {
+      "name": "Apache License Version 2.0",
+      "url": "http://www.apache.org/licenses/LICENSE-2.0"
+    },
+    "contact": {
+      "name": "Sphereon DevOps Team",
+      "url": "https://sphereon.com",
+      "email": "dev@sphereon.com"
+    },
+    "description": "The Split and Merge API allows you to split and merge files. For now you always have to define the filetype for the split or merge result. Supported types are Tiff, PDF or MS word files. In the future new types as well as type inferring will be implemented. Please note that this API will change in the way the merge or split is initiated from v0.1 to v0.2 which is scheduled later in 2017.",
+    "termsOfService": "https://sphereon.com",
+    "title": "Split Merger",
+    "version": "0.1"
+  },
+  "tags": [{
+    "name": "All",
+    "description": "Split and Merger related API"
+  }]
+}
